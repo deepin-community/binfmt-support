@@ -1,0 +1,111 @@
+#! /bin/sh
+
+# Copyright (C) 2010 Colin Watson.
+#
+# This file is part of binfmt-support.
+#
+# binfmt-support is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# binfmt-support is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with binfmt-support; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+# Test update-binfmts --import and --unimport.
+
+: ${srcdir=.}
+. "$srcdir/testlib.sh"
+
+init
+fake_proc
+
+cat >"$tmpdir/usr/share/binfmts/test-magic" <<'EOF'
+package testpkg
+interpreter /bin/sh
+magic ABCD
+EOF
+expect_pass 'magic: import' \
+	    'update_binfmts_proc --import test-magic'
+cat >"$tmpdir/1-admin.exp" <<'EOF'
+testpkg
+magic
+0
+ABCD
+
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'magic: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-magic" "$tmpdir/1-admin.exp"'
+cat >"$tmpdir/1-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+offset 0
+magic 41424344
+EOF
+expect_pass 'magic: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-magic" "$tmpdir/1-proc.exp"'
+
+cat >"$tmpdir/usr/share/binfmts/test-magic-mask" <<'EOF'
+package testpkg
+interpreter /bin/sh
+magic ABCD
+mask \x7f\x7f\x7f\x7f
+EOF
+expect_pass 'import all' \
+	    'update_binfmts_proc --import'
+cat >"$tmpdir/2-admin.exp" <<'EOF'
+testpkg
+magic
+0
+ABCD
+\x7f\x7f\x7f\x7f
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'magic with mask: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-magic-mask" "$tmpdir/2-admin.exp"'
+cat >"$tmpdir/2-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+offset 0
+magic 41424344
+mask 7f7f7f7f
+EOF
+expect_pass 'magic with mask: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-magic-mask" "$tmpdir/2-proc.exp"'
+
+expect_pass 'magic: unimport' \
+	    'update_binfmts_proc --unimport test-magic'
+expect_pass 'magic: admindir entry gone' \
+	    '! test -e "$tmpdir/var/lib/binfmts/test-magic"'
+expect_pass 'magic: procdir entry gone' \
+	    '! test -e "$tmpdir/proc/test-magic"'
+expect_pass 'magic with mask: admindir entry still OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-magic-mask" "$tmpdir/2-admin.exp"'
+expect_pass 'magic with mask: procdir entry still OK' \
+	    'diff -u "$tmpdir/proc/test-magic-mask" "$tmpdir/2-proc.exp"'
+
+expect_pass 'unimport all' \
+	    'update_binfmts_proc --unimport'
+expect_pass 'magic with mask: admindir entry gone' \
+	    '! test -e "$tmpdir/var/lib/binfmts/test-magic-mask"'
+expect_pass 'magic with mask: procdir entry gone' \
+	    '! test -e "$tmpdir/proc/test-magic-mask"'
+
+finish

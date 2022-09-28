@@ -1,0 +1,22 @@
+#! /usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS := hardening=+all
+
+%:
+	dh $@ --builddirectory=debian/build --with=autoreconf,systemd \
+		--parallel
+
+# --libexecdir is set here because debhelper defaults to using multiarch
+# paths at compat level 9, which is a reasonable choice in general but
+# unnecessary here.
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		--libexecdir=\$${prefix}/lib \
+		--with-systemdsystemunitdir=/lib/systemd/system \
+		--disable-upstart
+
+override_dh_auto_test:
+	VERBOSE=1 dh_auto_test
+
+override_dh_installinit:
+	dh_installinit --error-handler=true

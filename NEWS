@@ -1,0 +1,101 @@
+binfmt-support 2.2.1 (17 April 2020)
+====================================
+
+Fix wrongly-documented "fix_binary" format entry.  Thanks to Helmut Grohne.
+
+Ensure that standard I/O streams are open on program startup.
+
+Fix build with gcc -fno-common.
+
+Improve some internal data structures.
+
+binfmt-support 2.2.0 (24 January 2019)
+======================================
+
+Remove support for the old procfs interface, which has been unused since
+Linux 2.4.13 and which caused trouble in environments where we can't use
+modprobe.  Thanks to Bastian Blank.
+
+Sort formats by name in the output of "update-binfmts --display".
+
+Building binfmt-support now requires Autoconf >= 2.63.
+
+Add a new --unimport action, which is the inverse of --import.
+
+Don't enable formats on import or disable them on unimport unless
+/proc/sys/fs/binfmt_misc is already mounted.  This avoids causing cleanup
+problems in chroots.
+
+"--fix-binary yes" is incompatible with detectors.  Warn the user if they
+try to use both at once.  Thanks to Stefan Agner.
+
+binfmt-support 2.1.8 (22 August 2017)
+=====================================
+
+Add --disable-upstart and --disable-systemd configure options.
+
+binfmt-support 2.1.7 (9 July 2017)
+==================================
+
+Add an "update-binfmts --fix-binary yes" option, mapping to the 'F' flag in
+Linux binfmt_misc's flags field.  Thanks to Dan Nicholson.
+
+binfmt-support 2.1.6 (21 February 2016)
+=======================================
+
+Always install database entry even if /proc entry exists.  Thanks to Raphaël
+Hertzog.
+
+Implement a stop action for the systemd service.  Thanks to Michael Biebl.
+
+binfmt-support 2.1.5 (24 August 2014)
+=====================================
+
+Add an "update-binfmts --preserve yes" option, mapping to the 'P' flag in
+Linux binfmt_misc's flags field.  Thanks to Riku Voipio.
+
+binfmt-support 2.1.4 (30 March 2014)
+====================================
+
+Fix test suite when libexecdir is not /usr/lib.
+
+Fix --disable-sysvinit and --disable-openrc configure options.
+
+Make the Upstart job a service with pre-start and post-stop stanzas rather
+than a task, as a task with a corresponding init script prevents startpar
+from continuing the boot sequence past that init script (because the job is
+considered "stopped").  Thanks to Cameron Norman.
+
+binfmt-support 2.1.3 (8 February 2014)
+======================================
+
+Fix reversed logic in OpenRC script.
+
+binfmt-support 2.1.2 (7 February 2014)
+======================================
+
+Stop hardcoding Debian defaults for various directories.
+
+Ensure all necessary directories exist after installation.
+
+Embed full path to update-binfmts into the sample sysvinit script and the
+Upstart job file (the systemd unit file already did this), to save a path
+lookup.
+
+Add OpenRC support.
+
+Add mutually-exclusive --enable-sysvinit and --enable-openrc configure
+options, which cause the sysvinit or OpenRC script respectively to be
+installed to $sysconfdir/init.d/binfmt-support.
+
+binfmt-support 2.1.1 (29 December 2013)
+=======================================
+
+Fix installation of systemd unit files.
+
+binfmt-support 2.1.0 (29 December 2013)
+=======================================
+
+First separate upstream release, based on previous versions in Debian.
+
+Add a systemd unit file.

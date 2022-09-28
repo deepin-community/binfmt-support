@@ -1,0 +1,494 @@
+Previous versions of binfmt-support were maintained solely as a Debian
+package.  The following is the complete changelog up to the point where
+binfmt-support gained its own upstream existence.
+
+binfmt-support (2.0.16) unstable; urgency=low
+
+  * Use dh-autoreconf to keep autotools output up to date, especially for
+    new ports.
+  * Upgrade to Automake 1.14 and Gnulib 20130805-stable.  gnulib/gets.patch
+    is no longer needed.
+
+ -- Colin Watson <cjwatson@debian.org>  Wed, 13 Nov 2013 16:04:25 +0000
+
+binfmt-support (2.0.15) unstable; urgency=low
+
+  * Build-depend on debhelper (>= 9~) directly rather than requiring a
+    Lintian override for use of 8.9.0.
+  * Upgrade to Automake 1.13.2 and autotools-dev 20130515.1.
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 07 Jun 2013 11:38:48 +0100
+
+binfmt-support (2.0.14) unstable; urgency=low
+
+  * Install Upstart job on Debian as well, following new recommendations in
+    https://wiki.ubuntu.com/UpstartCompatibleInitScripts.
+
+ -- Colin Watson <cjwatson@debian.org>  Wed, 22 May 2013 09:23:42 +0100
+
+binfmt-support (2.0.13) unstable; urgency=low
+
+  * Drop python build-dependency; fuse is hardly ever available in
+    autobuilding environments anyway, so it's ineffective.  The test suite
+    is still useful for manual testing.
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 07 Dec 2012 13:55:37 +0000
+
+binfmt-support (2.0.12) unstable; urgency=low
+
+  * Fix ineffective --find test.
+  * Don't show disabled formats in --find output (closes: #689247).
+
+ -- Colin Watson <cjwatson@debian.org>  Sun, 30 Sep 2012 22:25:11 +0100
+
+binfmt-support (2.0.11) unstable; urgency=low
+
+  * Backport Gnulib commit 66712c23388e93e5c518ebc8515140fa0c807348 to stop
+    assuming gets.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 18 Sep 2012 00:05:32 +0100
+
+binfmt-support (2.0.10) unstable; urgency=low
+
+  * If a binary format is already enabled according to the kernel, which can
+    happen in chroots if it was installed in the host system, then continue
+    as gracefully as we can manage rather than exiting non-zero (closes:
+    #680349).
+  * Upgrade to Automake 1.11.6.
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 30 Jul 2012 10:36:59 +0100
+
+binfmt-support (2.0.9) unstable; urgency=low
+
+  * Make src/tests/binfmt_misc.py compatible with Python 3.
+  * Build with V=1 so that tools such as blhc can scan more effectively for
+    missing build flags.
+  * Convert debian/copyright to copyright-format 1.0.
+  * Upgrade to Autoconf 2.69, Automake 1.11.5, and Gnulib 20120404-stable.
+    gnulib/lib/argp-parse.patch is no longer needed.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 26 Jun 2012 00:22:20 +0100
+
+binfmt-support (2.0.8) unstable; urgency=low
+
+  * Only print informational messages on non-Linux systems if stderr is a
+    terminal.  This allows saving a couple of processes from the Upstart
+    job.
+  * Convert to dpkg-buildflags, using debhelper v9.
+
+ -- Colin Watson <cjwatson@debian.org>  Sun, 20 Nov 2011 17:24:19 +0000
+
+binfmt-support (2.0.7) unstable; urgency=low
+
+  * Fix display tests to actually test the output of --display.
+  * Upgrade to Gnulib 20110908-stable.
+  * Display a useful error message rather than crashing if asked to display
+    a non-existent binary format (closes: #643756, LP: #792601).
+
+ -- Colin Watson <cjwatson@debian.org>  Thu, 29 Sep 2011 12:38:22 +0100
+
+binfmt-support (2.0.6) unstable; urgency=low
+
+  * Remove /var/lib/binfmts on purge (closes: #635449).
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 26 Jul 2011 09:41:55 +0100
+
+binfmt-support (2.0.5) unstable; urgency=low
+
+  * Update Vcs-Bzr field for Alioth changes.
+  * Add an Upstart job, installed only on Ubuntu-derived distributions.
+  * Upgrade to Autoconf 2.68 and Gnulib 20110609-stable.
+  * Remove temporary test directory when skipping a test.
+
+ -- Colin Watson <cjwatson@debian.org>  Sun, 10 Jul 2011 01:15:31 +0100
+
+binfmt-support (2.0.4) unstable; urgency=low
+
+  * Add a basic test for --find.
+  * Use 'fusermount -u' rather than umount when running tests.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 22 Mar 2011 10:39:11 +0000
+
+binfmt-support (2.0.3) unstable; urgency=low
+
+  * Mark binfmt-support Multi-Arch: foreign.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 22 Feb 2011 12:26:13 +0000
+
+binfmt-support (2.0.2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 08 Feb 2011 10:22:00 +0000
+
+binfmt-support (2.0.1) experimental; urgency=low
+
+  * Add a --find option to print the list of interpreters for an executable.
+    Requested by Loïc Minier.
+  * Fix crash if get_import returns NULL (LP: #686115).
+  * Fix hexadecimal expansion to ensure that we only ever parse exactly two
+    hex digits.
+  * Use mem* functions rather than str* on binary data when finding
+    interpreters.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 25 Jan 2011 14:30:52 +0000
+
+binfmt-support (2.0.0) experimental; urgency=low
+
+  * Rewrite in C (closes: #602920).
+  * Upgrade to GPLv3 or later, mostly due to Gnulib.
+  * Use a separate build directory.
+  * Add a test suite.  This does nothing useful during a default Debian
+    package build as it currently requires FUSE, but it can be run by hand.
+  * Add option parsing to run-detectors, mainly so that we can have an
+    --admindir option for use by the test suite but also to provide a useful
+    --help.
+  * Remove cache directory hack, no longer necessary now that we aren't
+    pulling in Perl at boot time.
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 22 Nov 2010 11:15:58 +0000
+
+binfmt-support (1.2.20) experimental; urgency=low
+
+  * Fix =~ operator typo in Binfmt::Format.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 16 Nov 2010 17:57:31 +0000
+
+binfmt-support (1.2.19) experimental; urgency=low
+
+  * Drop error/warning wrapping; it was cute in 2000, but I find it annoying
+    now.  Use the 'say' feature from Perl 5.10.
+  * Convert from 'perl -w' to 'use warnings'.
+  * Strip trailing whitespace from values in database and format files.
+  * Upgrade to debhelper 8.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 16 Nov 2010 16:16:09 +0000
+
+binfmt-support (1.2.18) unstable; urgency=low
+
+  * Convert to source format 3.0 (native).
+  * Only warn about corrupted files in /var/lib/binfmts/ when we can't
+    continue without their contents (LP: #547052).
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 27 Mar 2010 15:30:40 +0000
+
+binfmt-support (1.2.17) unstable; urgency=low
+
+  [ Colin Watson ]
+  * Exit cleanly on non-Linux systems, rather than causing inconvenient
+    knock-on errors (closes: #565109).
+
+  [ Loïc Minier ]
+  * Add a new optional field "credentials" which when set to "yes"
+    corresponds to the binfmt-misc "C" flag; this allows running setuid root
+    binaries with the interpreter; LP: #519228.
+
+ -- Colin Watson <cjwatson@debian.org>  Wed, 17 Feb 2010 14:06:05 +0000
+
+binfmt-support (1.2.16) unstable; urgency=low
+
+  * Check whether modprobe is available before using it, this time in the
+    init script too (closes: #567979).
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 01 Feb 2010 17:40:51 +0000
+
+binfmt-support (1.2.15) unstable; urgency=low
+
+  * Ignore modprobe failures in init script (thanks, Philipp Weis; closes:
+    #549113).
+
+ -- Colin Watson <cjwatson@debian.org>  Thu, 01 Oct 2009 19:18:10 +0100
+
+binfmt-support (1.2.14) unstable; urgency=low
+
+  [ Tormod Volden ]
+  * Maintain a cache of binary format registration instructions, and use
+    them from shell at boot time if possible to avoid the Perl slow path
+    (LP: #320822).
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 15 Sep 2009 12:48:37 +0100
+
+binfmt-support (1.2.13) unstable; urgency=low
+
+  * Upgrade to debhelper 7. Uses override targets, so requires 7.0.50.
+  * Check that /etc/default/rcS exists before sourcing it.
+  * Stop hardcoding path to update-binfmts.
+  * Remove Default-Stop from init script; cf. changelog entry for 1.2.8.
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 07 Sep 2009 02:19:38 +0100
+
+binfmt-support (1.2.12) unstable; urgency=low
+
+  * Moved to bzr.debian.org; add Vcs-Bzr control field.
+  * Some packages (hi, mono) occasionally seem to try to remove formats that
+    weren't installed and thus don't have an entry in the administration
+    directory. Make this non-fatal, since the state is already as requested.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 26 May 2009 10:13:28 +0100
+
+binfmt-support (1.2.11) unstable; urgency=low
+
+  * Recommend POSIX-compliant shell fragments in README.Debian.
+  * Remove stray 'closedir ADMINDIR' in act_display (closes: #482482).
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 23 May 2008 09:20:19 +0100
+
+binfmt-support (1.2.10) unstable; urgency=low
+
+  * Fix brown-paper-bag syntax error in Binfmt::Format (thanks, Bastian
+    Kleineidam; closes: #418343).
+  * Suppress perl warning about commas within qw().
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 09 Apr 2007 18:49:57 +0100
+
+binfmt-support (1.2.9) unstable; urgency=low
+
+  * Mount /proc/sys/fs/binfmt_misc nodev, noexec, and nosuid, to guard
+    against possible future kernel security vulnerabilities.
+  * Suppress warning on --test --import if the given format file has no
+    detector line (closes: #383287).
+
+ -- Colin Watson <cjwatson@debian.org>  Sun, 08 Apr 2007 21:32:00 +0100
+
+binfmt-support (1.2.8) unstable; urgency=low
+
+  * Disabling binfmt-support on system shutdown is rather pointless, so stop
+    doing it.
+  * Move debhelper from Build-Depends-Indep to Build-Depends (for clean
+    target).
+  * Use debhelper v4.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue,  2 May 2006 23:27:09 +0100
+
+binfmt-support (1.2.7) unstable; urgency=low
+
+  * Remove outdated skeleton comments in init script, since there's very
+    little of the skeleton left.
+  * Add LSB info to init script.
+  * Use log_daemon_msg from lsb-base (>= 3.0-6) for more policy-compliant
+    init script output.
+
+ -- Colin Watson <cjwatson@debian.org>  Thu, 27 Oct 2005 13:17:31 +0100
+
+binfmt-support (1.2.6) unstable; urgency=low
+
+  * Mount binfmt_misc filesystem as 'binfmt_misc' rather than 'none'
+    (thanks, Roucaries Bastien; closes: #328827).
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 17 Sep 2005 17:18:38 +0100
+
+binfmt-support (1.2.5) unstable; urgency=low
+
+  [ Colin Watson ]
+  * Stop the postinst/prerm from exiting non-zero if update-binfmts fails,
+    for example if you're running something other than Linux
+    (closes: #322193).
+  * Policy version 3.6.2. No changes required.
+  * Update GPL notices with the FSF's new address.
+
+  [ Scott James Remnant ]
+  * Use lsb functions in init script.
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 30 Aug 2005 17:48:51 +0100
+
+binfmt-support (1.2.4) hoary; urgency=low
+
+  * Move binfmt-support to start at 90 rather than 20
+
+ -- Thom May <thom@planetarytramp.net>  Fri, 10 Dec 2004 18:19:02 +0100
+
+binfmt-support (1.2.3) unstable; urgency=low
+
+  * Convert binfmt-support(8) to the -mdoc macro set.
+
+ -- Colin Watson <cjwatson@debian.org>  Thu,  1 Apr 2004 13:49:02 +0100
+
+binfmt-support (1.2.2) unstable; urgency=low
+
+  * Document the 'detector' option in format files.
+  * Don't bother trying to unload the binfmt_misc kernel module when
+    stopping, since (a) it means we run into a kernel bug, (b) it means we
+    have to keep track of whether the module was loaded by the administrator
+    before starting, and (c) it's unimportant anyway. Reassigns #155570 to
+    kernel.
+  * Policy version 3.5.9: no changes required.
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 26 Apr 2003 19:07:39 +0100
+
+binfmt-support (1.2.1) unstable; urgency=low
+
+  * Cosmetic improvements to debian/rules.
+  * Make update-binfmts(8) render properly under groff's utf8 device: in
+    particular, use '\-' rather than '-' where a real dash is needed.
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 24 Feb 2003 01:48:43 +0000
+
+binfmt-support (1.2.0) unstable; urgency=low
+
+  * Support for userspace detectors, at the request of the Mono folks. See
+    /usr/share/doc/binfmt-support/detectors for the rationale and design.
+
+    This involved substantial rearrangements of the code, so we now have a
+    couple of Perl modules in the Binfmt:: namespace. They don't have a
+    published interface, so writing code using them directly is a bad idea.
+
+  * Check that interpreters (and the new detectors) are executable.
+  * Localize all filehandles.
+  * Policy version 3.5.8: drop /usr/doc symlink.
+
+ -- Colin Watson <cjwatson@debian.org>  Wed, 11 Dec 2002 13:46:12 +0000
+
+binfmt-support (1.1.5) unstable; urgency=low
+
+  * Check (again - how did I lose this?) for the existence of $register, not
+    $procdir, when deciding whether to try loading the kernel module
+    (closes: #134206).
+
+ -- Colin Watson <cjwatson@debian.org>  Tue,  5 Mar 2002 21:37:32 +0000
+
+binfmt-support (1.1.4) unstable; urgency=low
+
+  * The "phone me if you want a bug fixed" release. :-)
+  * Apply more careful logic to loading and mounting binfmt_misc on newer
+    kernels (thanks, Daniel Silverstone; closes: #131236).
+  * Remove emacs local variables from this changelog.
+
+ -- Colin Watson <cjwatson@debian.org>  Sun,  3 Feb 2002 20:37:30 +0000
+
+binfmt-support (1.1.3) unstable; urgency=low
+
+  * Recommend in README.Debian that packages using --import conflict with
+    binfmt-support (<< 1.1.2).
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 26 Jan 2002 19:05:34 +0000
+
+binfmt-support (1.1.2) unstable; urgency=low
+
+  * Fix thinko that meant some warnings weren't printed.
+  * Make much more careful use of return codes throughout.
+  * When deciding whether to load the binfmt_misc module, check for the
+    existence of /proc/sys/fs/binfmt_misc/register, not merely the
+    directory. It seems that recent kernels can leave the directory hanging
+    around even after the module is removed (closes: #129400, #129621).
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 19 Jan 2002 19:14:58 +0000
+
+binfmt-support (1.1.1) unstable; urgency=medium
+
+  * Return non-fatally if binfmt_misc couldn't be loaded (see #129170).
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 14 Jan 2002 13:52:32 +0000
+
+binfmt-support (1.1.0) unstable; urgency=low
+
+  * Implement an --import option to allow packages to install format files
+    without depending on binfmt-support. All format files will be imported
+    by binfmt-support when it's eventually installed (closes: #119694).
+  * Update lots of documentation in line with this.
+  * Install the directory /usr/share/binfmts for format files.
+  * Don't attempt to load and unload the binfmt_misc kernel module in --test
+    mode.
+
+  * Use Text::Wrap rather than my own wrap() function.
+  * General code cleanup.
+  * get_binfmt() now returns a hash, not an array.
+  * Apply better nroff style to the man page.
+  * Policy version 3.5.6.
+  * Perl policy version 1.20.
+
+ -- Colin Watson <cjwatson@debian.org>  Sun,  6 Jan 2002 13:58:51 +0000
+
+binfmt-support (1.0.6) unstable; urgency=low
+
+  * Check whether modprobe is available before using it (closes: #106090).
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 21 Jul 2001 17:18:10 +0100
+
+binfmt-support (1.0.5) unstable; urgency=low
+
+  * Updated to policy version 3.5.2: no changes required.
+  * Remove duplicate conffiles entry.
+
+  * Support recent -ac kernels which require binfmt_misc to be mounted as a
+    filesystem. For now, it seems neatest to mount it over
+    /proc/sys/fs/binfmt_misc, but that may change (especially as it's not
+    clear whether that directory will always exist).
+  * If disabling all binary formats, also unmount the filesystem if
+    necessary, and unload the kernel module. This will help upgrading in the
+    future if the kernel interface is changed again.
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 27 Apr 2001 11:58:01 +0100
+
+binfmt-support (1.0.4) unstable; urgency=low
+
+  * Uploaded to Debian (closes: #78872).
+  * New maintainer address.
+  * Standards-Version: 3.5.1: no changes required.
+  * Use debhelper v3.
+  * Updated to new Perl policy.
+  * This is Architecture: all, so use the binary-indep target in
+    debian/rules rather than the binary-arch target.
+  * Started updating the version number automagically.
+  * Pointed URL in copyright file to the package pool.
+
+  * --display can now be called without an argument to display all known
+    binary formats and whether they are enabled; its output looks better,
+    too.
+  * Improved --test option.
+  * Don't hardcode ENOENT any more, anticipating future Hurd support.
+  * Print an error message on startup if the operating system isn't Linux
+    (although the package can still be installed).
+  * Recoded the option parsing and the actions into dispatch tables.
+  * Really test for existence of /usr/sbin/update-binfmts in init script.
+  * Fixed formatting error in man page (\x is an escape sequence).
+  * "Debian GNU/Linux" -> "Debian GNU".
+
+ -- Colin Watson <cjwatson@debian.org>  Sat, 17 Feb 2001 14:38:55 +0000
+
+binfmt-support (1.0.3) unstable; urgency=low
+
+  * D'oh. update-binfmts should have been in /usr/sbin all along. Updated
+    README.Debian to account for this.
+  * Included the GPL in the source package.
+  * Improved --install/--remove logic:
+    - Remove entries even if their interpreter has changed, otherwise
+      deliberately changing interpreters becomes rather awkward. We only
+      need to make sure that the package is the same.
+    - --install will now disable existing /proc entries as long as
+      /var/lib/binfmts is consistent. Without this, you could sometimes end
+      up with multiple entries in /proc with the same name, due to a kernel
+      bug. Added some extra checking to make this even less likely.
+    - Don't warn about there being no /proc entry when removing. This can
+      easily happen on upgrades, and it also helps maintainer scripts to be
+      idempotent.
+  * Running --enable and/or --disable multiple times now doesn't create
+    multiple entries in /proc with the same name either.
+
+ -- Colin Watson <cjw44@flatline.org.uk>  Sun, 10 Dec 2000 00:24:18 +0000
+
+binfmt-support (1.0.2) unstable; urgency=low
+
+  * Standards-Version: 3.2.1: no changes required.
+  * Build-Depends-Indep: rather than Build-Depends:.
+  * Use debhelper DH_COMPAT=2.
+  * debian/rules: cleanup.
+  * Don't 'use diagnostics'; it's slow.
+  * Some additions to the man page.
+  * Oops, remember to update $VERSION this time.
+  * Added debian/TODO.
+  * Added note in README.Debian about requiring binfmt_misc.
+
+ -- Colin Watson <cjw44@flatline.org.uk>  Wed,  6 Dec 2000 00:45:44 +0000
+
+binfmt-support (1.0.1) unstable; urgency=low
+
+  * Improved long description (sysadmins can use update-binfmts too).
+  * Standards-Version: 3.1.1, Build-Depends: line.
+
+ -- Colin Watson <cjw44@flatline.org.uk>  Tue, 30 May 2000 23:18:58 +0100
+
+binfmt-support (1.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Colin Watson <cjw44@flatline.org.uk>  Tue, 16 May 2000 23:46:15 +0100

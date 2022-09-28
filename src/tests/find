@@ -1,0 +1,47 @@
+#! /bin/sh
+
+# Copyright (C) 2011, 2012 Colin Watson.
+#
+# This file is part of binfmt-support.
+#
+# binfmt-support is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# binfmt-support is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with binfmt-support; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+# Test update-binfmts --find.
+
+: ${srcdir=.}
+. "$srcdir/testlib.sh"
+
+init
+fake_proc
+
+expect_pass 'magic: install' \
+	    'update_binfmts_proc --install test /bin/sh --magic ABCD'
+echo 'ABCD' >"$tmpdir/program.ext"
+chmod +x "$tmpdir/program.ext"
+echo /bin/sh >"$tmpdir/1.exp"
+expect_pass 'magic: run find' \
+	    'update_binfmts_proc --find "$tmpdir/program.ext" >"$tmpdir/1.out"'
+expect_pass 'magic: find result OK' \
+	    'diff -u "$tmpdir/1.out" "$tmpdir/1.exp"'
+
+expect_pass 'magic: disable' \
+	    'update_binfmts_proc --disable test'
+touch "$tmpdir/2.exp"
+expect_pass 'magic: run find (disabled)' \
+	    'update_binfmts_proc --find "$tmpdir/program.ext" >"$tmpdir/2.out"'
+expect_pass 'magic: find result OK' \
+	    'diff -u "$tmpdir/2.out" "$tmpdir/2.exp"'
+
+finish

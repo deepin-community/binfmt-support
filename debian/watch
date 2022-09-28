@@ -1,0 +1,3 @@
+version=3
+opts=pgpsigurlmangle=s/$/.sig/ \
+https://download.savannah.nongnu.org/releases/binfmt-support/binfmt-support-(.*)\.tar\.gz

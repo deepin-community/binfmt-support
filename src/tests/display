@@ -1,0 +1,109 @@
+#! /bin/sh
+
+# Copyright (C) 2010, 2011 Colin Watson.
+#
+# This file is part of binfmt-support.
+#
+# binfmt-support is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# binfmt-support is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with binfmt-support; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+# Test update-binfmts --display.
+
+: ${srcdir=.}
+. "$srcdir/testlib.sh"
+
+init
+fake_proc
+
+expect_pass 'magic: install' \
+	    'update_binfmts_proc --install test-magic /bin/sh --magic ABCD'
+cat >"$tmpdir/1-admin.exp" <<'EOF'
+:
+magic
+0
+ABCD
+
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'magic: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-magic" "$tmpdir/1-admin.exp"'
+cat >"$tmpdir/1-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+offset 0
+magic 41424344
+EOF
+expect_pass 'magic: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-magic" "$tmpdir/1-proc.exp"'
+
+expect_pass 'extension with package: install' \
+	    'update_binfmts_proc --package testpkg --install test-extension /bin/sh --extension ext'
+cat >"$tmpdir/2-admin.exp" <<'EOF'
+testpkg
+extension
+0
+ext
+
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'extension with package: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-extension" "$tmpdir/2-admin.exp"'
+cat >"$tmpdir/2-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+extension .ext
+EOF
+expect_pass 'extension with package: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-extension" "$tmpdir/2-proc.exp"'
+
+cat >"$tmpdir/1-display.exp" <<'EOF'
+test-magic (enabled):
+     package = <local>
+        type = magic
+      offset = 0
+       magic = ABCD
+        mask = 
+ interpreter = /bin/sh
+    detector = 
+EOF
+expect_pass 'magic: display OK' \
+	    'update_binfmts_proc --display test-magic | diff -u - "$tmpdir/1-display.exp"'
+
+cat >"$tmpdir/2-display.exp" <<'EOF'
+test-extension (enabled):
+     package = testpkg
+        type = extension
+      offset = 0
+       magic = ext
+        mask = 
+ interpreter = /bin/sh
+    detector = 
+EOF
+expect_pass 'extension with package: display OK' \
+	    'update_binfmts_proc --display test-extension | diff -u - "$tmpdir/2-display.exp"'
+
+expect_pass 'nonexistent entry: display exit code OK' \
+	    'update_binfmts_proc --display nonexistent 2>/dev/null; test "$?" = 2'
+
+finish

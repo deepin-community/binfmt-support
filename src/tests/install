@@ -1,0 +1,168 @@
+#! /bin/sh
+
+# Copyright (C) 2010 Colin Watson.
+#
+# This file is part of binfmt-support.
+#
+# binfmt-support is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# binfmt-support is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with binfmt-support; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+# Test update-binfmts --install and --remove.
+
+: ${srcdir=.}
+. "$srcdir/testlib.sh"
+
+init
+fake_proc
+
+expect_pass 'magic: install' \
+	    'update_binfmts_proc --install test /bin/sh --magic ABCD'
+cat >"$tmpdir/1-admin.exp" <<'EOF'
+:
+magic
+0
+ABCD
+
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'magic: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test" "$tmpdir/1-admin.exp"'
+cat >"$tmpdir/1-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+offset 0
+magic 41424344
+EOF
+expect_pass 'magic: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test" "$tmpdir/1-proc.exp"'
+expect_pass 'magic: remove' \
+	    'update_binfmts_proc --remove test /bin/sh'
+expect_pass 'magic: admindir entry gone' \
+	    '! test -e "$tmpdir/var/lib/binfmts/test"'
+expect_pass 'magic: procdir entry gone' \
+	    '! test -e "$tmpdir/proc/test"'
+
+expect_pass 'magic with offset and mask: install' \
+	    'update_binfmts_proc --install test /bin/sh --magic ABCD --offset 10 --mask "\\x7f\\x7f\\x7f\\x7f"'
+cat >"$tmpdir/2-admin.exp" <<'EOF'
+:
+magic
+10
+ABCD
+\x7f\x7f\x7f\x7f
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'magic with offset and mask: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test" "$tmpdir/2-admin.exp"'
+cat >"$tmpdir/2-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+offset 10
+magic 41424344
+mask 7f7f7f7f
+EOF
+expect_pass 'magic with offset and mask: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test" "$tmpdir/2-proc.exp"'
+expect_pass 'magic with offset and mask: remove' \
+	    'update_binfmts_proc --remove test /bin/sh'
+expect_pass 'magic with offset and mask: admindir entry gone' \
+	    '! test -e "$tmpdir/var/lib/binfmts/test"'
+expect_pass 'magic with offset and mask: procdir entry gone' \
+	    '! test -e "$tmpdir/proc/test"'
+
+expect_pass 'extension: install' \
+	    'update_binfmts_proc --install test /bin/sh --extension ext'
+cat >"$tmpdir/3-admin.exp" <<'EOF'
+:
+extension
+0
+ext
+
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'extension: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test" "$tmpdir/3-admin.exp"'
+cat >"$tmpdir/3-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+extension .ext
+EOF
+expect_pass 'extension: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test" "$tmpdir/3-proc.exp"'
+expect_pass 'extension: remove with package' \
+	    'update_binfmts_proc --package testpkg --remove test /bin/sh 2>/dev/null'
+expect_pass 'extension: admindir entry still here' \
+	    'test -e "$tmpdir/var/lib/binfmts/test"'
+expect_pass 'extension: procdir entry still here' \
+	    'test -e "$tmpdir/proc/test"'
+expect_pass 'extension: remove without package' \
+	    'update_binfmts_proc --remove test /bin/sh'
+expect_pass 'extension: admindir entry gone' \
+	    '! test -e "$tmpdir/var/lib/binfmts/test"'
+expect_pass 'extension: procdir entry gone' \
+	    '! test -e "$tmpdir/proc/test"'
+
+expect_pass 'extension with package: install' \
+	    'update_binfmts_proc --package testpkg --install test /bin/sh --extension ext'
+cat >"$tmpdir/4-admin.exp" <<'EOF'
+testpkg
+extension
+0
+ext
+
+/bin/sh
+
+
+
+
+EOF
+expect_pass 'extension with package: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test" "$tmpdir/4-admin.exp"'
+cat >"$tmpdir/4-proc.exp" <<'EOF'
+enabled
+interpreter /bin/sh
+flags: 
+extension .ext
+EOF
+expect_pass 'extension with package: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test" "$tmpdir/4-proc.exp"'
+expect_pass 'extension with package: remove without package' \
+	    'update_binfmts_proc --remove test /bin/sh 2>/dev/null'
+expect_pass 'extension with package: admindir entry still here' \
+	    'test -e "$tmpdir/var/lib/binfmts/test"'
+expect_pass 'extension with package: procdir entry still here' \
+	    'test -e "$tmpdir/proc/test"'
+expect_pass 'extension with package: remove with package' \
+	    'update_binfmts_proc --package testpkg --remove test /bin/sh'
+expect_pass 'extension with package: admindir entry gone' \
+	    '! test -e "$tmpdir/var/lib/binfmts/test"'
+expect_pass 'extension with package: procdir entry gone' \
+	    '! test -e "$tmpdir/proc/test"'
+
+finish

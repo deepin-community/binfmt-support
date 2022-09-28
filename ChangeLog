@@ -1,0 +1,657 @@
+2020-04-17  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.2.1
+
+	NEWS: Document changes for 2.2.1
+
+2020-04-17  Colin Watson  <cjwatson@debian.org>
+
+	Fix build with gcc -fno-common
+
+	Fixes Debian bug #957038.
+
+	* src/paths.h (admindir, importdir, procdir, auxdir): Declare as extern.
+
+2020-01-01  Colin Watson  <cjwatson@debian.org>
+
+	Ensure that standard I/O streams are open
+
+	Otherwise behaviour is undefined if somebody (unwisely) closes them
+	before calling us.
+
+	* bootstrap.conf (gnulib_modules): Add xstdopen.
+	* src/update-binfmts.c (main): Call xstdopen.
+
+2019-12-27  Colin Watson  <cjwatson@debian.org>
+
+	Replace kvhash with gl_map/gl_omap
+
+	A list was a clumsy implementation of this; a map is more appropriate.
+
+	* bootstrap.conf (gnulib_modules): Add hash-map, hash-pjw-bare,
+	rbtree-omap, stdbool, xmap, and xomap; remove rbtreehash-list.
+
+	* src/glcontainers.c: New file.
+	* src/glcontainers.h (string_equals, string_hash, plain_free,
+	new_string_map, new_string_omap, map_contains, omap_contains): Add
+	prototypes.
+	(GL_OMAP_FOREACH_START, GL_OMAP_FOREACH_END): New macros.
+
+	* src/format.c (binfmt_new): Take a map rather than a list.
+	(kvhash_dispose_binfmt): Remove.
+	* src/format.h (binfmt_new): Update prototype.
+	(kvhash_dispose_binfmt): Remove prototype.
+
+	* src/update-binfmts.c (formats): Declare as a map rather than a list.
+	(get_import, load_format, act_enable, act_disable, act_install,
+	act_remove, act_import, act_unimport, act_display, main): Update to the
+	map API.
+	(act_import, act_unimport): Free import before returning.
+
+	* src/kvhash.c, src/kvhash.h: Remove.
+
+	* src/Makefile.am (COMMON): Add glcontainers.c; remove kvhash.c and
+	kvhash.h.
+
+2019-11-18  Helmut Grohne  <helmut.grohne@intenta.de>
+
+	Fix wrongly-documented "fix_binary" format entry
+
+	The manual page says:
+
+	| The magic, offset, mask, extension, detector, credentials, preserve, and
+	| fix-binary options correspond to the command-line options of the same
+	| names.
+
+	However, the code parses "fix_binary" rather than "fix-binary". Use of
+	"fix-binary" is silently ignored.
+
+	Fixes Debian bug #945020.
+
+	* man/update-binfmts.man8 (FORMAT FILES): Correct spelling of
+	"fix_binary" option.
+
+2019-02-10  Colin Watson  <cjwatson@debian.org>
+
+	Use macros for common cases of list iteration
+
+	* src/glcontainers.h: New file.
+	* src/Makefile.am (COMMON): Add glcontainers.h.
+	* src/find.c (find_interpreters): Replace manual list iteration with
+	equivalent macros.
+	* src/run-detectors.c (main): Likewise.
+	* src/update-binfmts.c (act_enable, act_disable, act_display): Likewise.
+
+2019-01-24  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.2.0
+
+	Update to Gnulib 20190124
+
+2019-01-13  Colin Watson  <cjwatson@debian.org>
+
+	Warn about fix-binary/detectors incompatibility
+
+	"--fix-binary yes" is incompatible with detectors.  Warn the user if
+	they try to use both at once.
+
+	Thanks to Stefan Agner; fixes Debian bug #918901.
+
+	* src/update-binfmts.c (act_enable): Warn and return if a detector is
+	needed and the fix-binary flag is set.
+	* man/update-binfmts.man8 (BINARY FORMAT SPECIFICATIONS): Document the
+	incompatibility.
+	* NEWS: Document this.
+
+2019-01-13  Colin Watson  <cjwatson@debian.org>
+
+	Avoid cleanup problems in chroots
+
+	Don't enable formats on import or disable them on unimport unless
+	/proc/sys/fs/binfmt_misc is already mounted.
+
+	Fixes Debian bug #847788 and Ubuntu bug #534211.
+
+	* src/update-binfmts.c (is_enabled): New function.
+	(load_binfmt_misc): Use is_enabled rather than equivalent code.
+	(act_install): Add always_update_kernel argument.  Only enable/disable
+	if always_update_kernel or if binfmt_misc is already enabled.
+	(act_remove): Add always_update_kernel argument.  Only disable if
+	always_update_kernel or if binfmt_misc is already enabled.
+	(act_import, act_unimport, main): Adjust calls to act_install and
+	act_remove.
+	* NEWS: Document this.
+
+2019-01-13  Colin Watson  <cjwatson@debian.org>
+
+	Add a new --unimport action
+
+	This is the inverse of --import.
+
+	* src/update-binfmts.c (act_unimport): New function.
+	(enum opts, options, mode_name, parse_opt, argp, main): Handle
+	--unimport.
+	* src/tests/import: Test --unimport.
+	* man/update-binfmts.man8 (SYNOPSIS): Add --unimport.
+	(COMMON OPTIONS): Mention --unimport in description of --package.
+	(ACTIONS): Document --unimport.
+	* NEWS: Document this.
+
+2019-01-05  Colin Watson  <cjwatson@debian.org>
+
+	Upgrade to Gnulib 20190105
+
+	In line with Gnulib, we now require Autoconf 2.63.
+
+	* bootstrap: Sync to Gnulib d271f868a8df9bbec29049d01e056481b7a1a263.
+	* bootstrap.conf (GNULIB_REVISION): Set to
+	d271f868a8df9bbec29049d01e056481b7a1a263.
+	(buildreq): Bump required autoconf version to 2.63.
+	* configure.ac (AM_SILENT_RULES): Remove conditional, which was there
+	for Automake 1.10 support.
+	(AC_PREREQ): Bump to 2.63.
+	* NEWS: Document this.
+
+2019-01-05  Colin Watson  <cjwatson@debian.org>
+
+	Add release.sh script
+
+	* release.sh: New file.
+	* Makefile.am (EXTRA_DIST): Add release.sh.
+
+2019-01-05  Colin Watson  <cjwatson@debian.org>
+
+	Use tar --sort=name if available
+
+	* m4/binfmt-tar-sort-name.m4: New file.
+	* configure.ac: Call BINFMT_TAR_SORT_NAME.
+	* Makefile.am (ACLOCAL_AMFLAGS): Add -I m4.
+
+2019-01-04  Colin Watson  <cjwatson@debian.org>
+
+	Sort formats by name in --display
+
+	The easiest way to do this was to recast kvhash as a wrapper around a
+	gl_list_t (specifically a red-black tree hash) rather than a Hash_table.
+
+	* bootstrap.conf (gnulib_modules): Remove hash; add rbtreehash-list.
+
+	* src/kvhash.c (kvhash_hasher): Rename to ...
+	(kvhash_hashcode): ... this, make static, and replace the hash
+	implementation with one from Gnulib.
+	(kvhash_compare): New function.
+	(kvhash_comparator): Rename to ...
+	(kvhash_equals): ... this, make static, and reimplement using
+	kvhash_compare.
+	(kvhash_dispose, kvhash_dispose_plain): New functions.
+	(kvhash_initialize, kvhash_exists, kvhash_lookup, kvhash_insert,
+	kvhash_delete): Use a list rather than a hash.
+	* src/kvhash.h (kvhash_hasher, kvhash_comparator): Remove prototypes.
+	(kvhash_dispose, kvhash_dispose_plain): Add prototypes.
+	(kvhash_initialize, kvhash_exists, kvhash_lookup, kvhash_insert,
+	kvhash_delete): Update prototypes.
+
+	* src/format.c (binfmt_new): Take a list rather than a hash table.
+	(binfmt_hash_free): Rename to ...
+	(kvhash_dispose_binfmt): ... this, and update to the list API.
+	* src/format.h (binfmt_new): Update prototype.
+	(binfmt_hash_free): Rename to ...
+	(kvhash_dispose_binfmt): ... this, and update prototype.
+
+	* src/update-binfmts.c (formats): Declare as a list rather than a hash
+	table.
+	(get_import, act_enable, act_disable, act_import, act_display, main):
+	Update to the list API.
+
+	* NEWS: Document this.
+
+2018-12-24  Colin Watson  <cjwatson@debian.org>
+
+	More (void *) 0 as variadic sentinel
+
+	* src/find.c (find_interpreters): Use (void *) rather than NULL as a
+	sentinel for variadic functions.
+
+2018-12-24  Colin Watson  <cjwatson@debian.org>
+
+	Use (void *) 0 as a variadic sentinel
+
+	NULL is formally incorrect here since the standard allows it to be an
+	integer constant expression.
+
+	* src/update-binfmts.c (rename_mv, load_binfmt_misc,
+	unload_binfmt_misc): Use (void *) rather than NULL as a sentinel for
+	variadic functions.
+
+2018-12-24  Colin Watson  <cjwatson@debian.org>
+
+	Tidy up and document removal of procfs support
+
+	* src/update-binfmts.c (unload_binfmt_misc): Move declarations to top of
+	function.  Remove obsolete comment.
+	* NEWS: Document removal of procfs support.
+
+2018-12-24  Bastian Blank  <waldi@debian.org>
+
+	Remove ancient unused procfs support
+
+	* src/update-binfmts.c (enum binfmt_style, get_binfmt_style): Remove.
+	(load_binfmt_misc, unload_binfmt_misc): Remove procfs case.
+
+2018-05-29  Colin Watson  <cjwatson@debian.org>
+
+	Avoid gl directory confusion
+
+	* bootstrap.conf (local_gl_dir): Set to 'gnulib-local'.
+
+2018-05-28  Colin Watson  <cjwatson@debian.org>
+
+	Upgrade to Gnulib 20180527
+
+	* bootstrap.conf (GNULIB_URL): Remove.
+	(GNULIB_REVISION): Set to 90f289f249a266b1afb9c63e182f5d979d17df5f.
+	(gnulib_extra_files): Remove.  (This has the effect of reverting to
+	bootstrap's default of also copying some files in build-aux/ from
+	Gnulib.)
+
+2018-05-28  Colin Watson  <cjwatson@debian.org>
+
+	Switch to bootstrap
+
+	We no longer keep autogenerated files in git.
+
+	* .gitignore: Add **/Makefile, **/Makefile.in, /INSTALL, /aclocal.m4,
+	/build-aux, /config.h.in, /configure, /gl, and /gnulib.  Remove
+	doc/Makefile, gnulib/*, init/Makefile, init/openrc/Makefile,
+	init/systemd/Makefile, init/sysvinit/Makefile, init/upstart/Makefile,
+	man/Makefile, src/Makefile, and src/tests/Makefile.
+	* INSTALL, Makefile.in, aclocal.m4, autogen.sh, build-aux, config.h.in,
+	configure, doc/Makefile.in, gnulib, init/Makefile.in,
+	init/openrc/Makefile.in, init/systemd/Makefile.in,
+	init/sysvinit/Makefile.in, init/upstart/Makefile.in, man/Makefile.in,
+	src/Makefile.in, src/tests/Makefile.in: Remove.
+	* bootstrap, bootstrap.conf: New files.
+	* Makefile.am (SUBDIRS, EXTRA_DIST, ACLOCAL_AMFLAGS): Refer to gl/
+	rather than gnulib/ (gnulib/ now contains pristine source).
+	(EXTRA_DIST): Replace autogen.sh with bootstrap and bootstrap.conf.
+	Remove gnulib/m4/gnulib-cache.m4 and gnulib/m4/gnulib-tool.m4.
+	* configure.ac (AC_CONFIG_FILES): Refer to gl/ rather than gnulib/.
+	* src/Makefile.am (AM_CPPFLAGS, LIBGNU): Likewise.
+
+2017-08-22  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.8.
+
+2017-08-22  Colin Watson  <cjwatson@debian.org>
+
+	Add --disable-{upstart,systemd} configure options
+
+	* configure.ac: Add --disable-upstart and --disable-systemd options.
+	* init/upstart/Makefile.am: Don't install job if --disable-upstart is
+	used.
+	* init/systemd/Makefile.am: Don't install unit if --disable-systemd is
+	used.
+	* NEWS: Document this.
+
+2017-07-09  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.7.
+
+2017-07-09  Dan Nicholson  <nicholson@endlessm.com>
+
+	Add support for fix-binary flag
+
+	Recent kernels provide a binfmt flag F referred to as fix binary[1].
+	This flag instructs the kernel to open the interpreter immediately and
+	use always use the opened image. This has a big advantage in containers
+	or chroots where the interpreter may not exist at the specified path.
+
+	A primary use case would be for a static linked QEMU user emulator where
+	an architecture can be emulated in a container or chroot without any
+	alterations so long as the binfmt configuration is handled on the host.
+
+	1. https://www.kernel.org/doc/html/latest/admin-guide/binfmt-misc.html
+
+2017-07-09  Colin Watson  <cjwatson@debian.org>
+
+	Various build system upgrades
+
+	Upgrade to Automake 1.15.1, config.guess 2016-10-02, and config.sub
+	2016-11-04.
+
+2016-02-21  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.6.
+
+2016-02-21  Colin Watson  <cjwatson@debian.org>
+
+	Various build system upgrades
+
+	Upgrade to Autoconf 2.69-9 (from Debian), config.guess 2015-08-20,
+	config.sub 2015-08-20, and pkg-config 0.29.
+
+2016-02-21  Colin Watson  <cjwatson@debian.org>
+
+	Implement a stop action for the systemd service
+
+	* init/systemd/binfmt-support.service.in: Implement ExecStop, but
+	with manual dependencies so that the service doesn't need to be
+	(unnecessarily) stopped on shutdown.  Thanks to Michael Biebl; fixes
+	Debian bug #739085.
+	* NEWS: Document this.
+
+2016-02-21  Raphaël Hertzog  <hertzog@debian.org>
+
+	Always install DB entry even if /proc entry exists
+
+	* src/update-binfmts.c (act_install): Remove test for existing /proc
+	entry, superseded by test in act_enable.  Fixes Debian bug #750245.
+	* NEWS: Document this.
+
+2015-08-06  Colin Watson  <cjwatson@debian.org>
+
+	Upgrade to Automake 1.15 and config.sub 2014-09-11.
+
+2014-08-24  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.5.
+
+	Upgrade to Gettext 0.19.2.
+
+2014-08-19  Colin Watson  <cjwatson@debian.org>
+
+	Update to config.guess 2014-03-23 and config.sub 2014-05-01.
+
+2014-08-19  Riku Voipio  <riku.voipio@linaro.org>
+
+	Add support for preserve-argv0 flag
+
+	Qemu will start requiring setting P in binfmt_misc
+	flags [P]. Unfortunately update-binfmts doesn't just
+	pass flags section as-is. The only supported flag
+	so far is credentials, which is supported via --credentials
+	command line flag.
+
+	I've implemented a similar --preserve flag in this commit.
+
+	This commit (or something similar) needs to land to Debian
+	before qemu 2.2 can be uploaded.
+
+	[P] https://www.kernel.org/doc/Documentation/binfmt_misc.txt
+
+2014-03-30  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.4.
+
+	Upgrade to Automake 1:1.14.1-3 (from Debian).
+
+2014-03-30  Cameron Norman  <camerontnorman@gmail.com>
+
+	upstart: do not act as a task
+
+	* init/upstart/binfmt-support.conf.in: Make the job a service with
+	pre-start and post-stop stanzas rather than a task, as a task with a
+	corresponding init script prevents startpar from continuing the boot
+	sequence past that init script (because the job is considered
+	"stopped").
+	* NEWS: Document this.
+
+2014-03-06  Colin Watson  <cjwatson@debian.org>
+
+	Fix --disable-sysvinit and --disable-openrc configure options
+
+	* configure.ac: Check whether $enable_sysvinit and $enable_openrc
+	are set to "yes", not merely whether they are set at all.
+	* NEWS: Document this.
+
+2014-02-20  Colin Watson  <cjwatson@debian.org>
+
+	Fix test suite when libexecdir is not /usr/lib
+
+	* src/tests/Makefile.am (TESTS_ENVIRONMENT): Export pkglibexecdir to
+	tests.
+	* src/tests/detectors: Expect interpreter to be set to
+	$pkglibexecdir/run-detectors rather than
+	/usr/lib/binfmt-support/run-detectors.
+	* NEWS: Document this.
+
+2014-02-20  Colin Watson  <cjwatson@debian.org>
+
+	* .gitignore: Add src/tests/*.log and src/tests/*.trs.
+
+2014-02-20  Colin Watson  <cjwatson@debian.org>
+
+	Move Autotools auxiliary build files from tools to build-aux.
+
+	"build-aux" is a more conventional location for the Autotools files.
+
+2014-02-18  Colin Watson  <cjwatson@debian.org>
+
+	Upgrade to Gnulib 20140202.
+
+2014-02-08  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.3.
+
+	* init/openrc/binfmt-support.in: Check uname in stop as well.
+
+2014-02-08  Colin Watson  <cjwatson@debian.org>
+
+	Fix reversed logic in OpenRC script
+
+	* init/openrc/binfmt-support.in (start): Fix reversed uname check.
+	* NEWS: Document this.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.2.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Add --enable-sysvinit and --enable-openrc configure options
+
+	* configure.ac: Add --enable-sysvinit and --enable-openrc options.
+	Check that at most one of these is used.
+	* init/openrc/Makefile.am: Install script if --enable-openrc is
+	used.
+	* init/sysvinit/Makefile.am: Install script if --enable-sysvinit is
+	used.
+	* NEWS: Document this.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Remove unnecessary file extension
+
+	* init/sysvinit/Makefile.am (EXTRA_DIST, CLEANFILES, noinst_SCRIPTS,
+	binfmt-support): Remove ".sh" extension.
+	* init/sysvinit/binfmt-support.sh.in: Rename to ...
+	* init/sysvinit/binfmt-support.in: ... this.
+	* .gitignore: Ignore init/sysvinit/binfmt-support rather than
+	init/sysvinit/binfmt-support.sh.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Add OpenRC support
+
+	* configure.ac (AC_CONFIG_FILES): Add init/openrc/Makefile.
+	* init/Makefile.am (SUBDIRS): Add openrc.
+	* init/openrc/Makefile.am: New file.
+	* init/openrc/binfmt-support.in: New file.
+	* .gitignore: Add init/openrc/Makefile and
+	init/openrc/binfmt-support.
+	* NEWS: Document this.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Embed full path to update-binfmts into init files
+
+	* init/sysvinit/binfmt-support.sh: Rename to ...
+	* init/sysvinit/binfmt-support.sh.in: ... this, substituting
+	@sbindir@ and removing PATH setting.
+	* init/sysvinit/Makefile.am (EXTRA_DIST): Distribute
+	binfmt-support.sh.in.
+	(CLEANFILES): Clean binfmt-support.sh.
+	(dist_noinst_SCRIPTS): Rename to ...
+	(noinst_SCRIPTS): ... this.
+	(binfmt-support.sh): Generate from binfmt-support.sh.in.
+	* init/upstart/binfmt-support.conf: Rename to ...
+	* init/upstart/binfmt-support.conf.in: ... this, substituting
+	@sbindir@.
+	* init/upstart/Makefile.am (EXTRA_DIST): Distribute
+	binfmt-support.conf.in.
+	(CLEANFILES): Clean binfmt-support.conf.
+	(dist_upstart_DATA): Rename to ...
+	(upstart_DATA): ... this.
+	(binfmt-support.conf): Generate from binfmt-support.conf.in.
+	* .gitignore: Add init/sysvinit/binfmt-support.sh and
+	init/upstart/binfmt-support.conf.
+	* NEWS: Document this.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Ensure all necessary directories exist after installation
+
+	* configure.ac: Add AC_PROG_MKDIR_P.
+	* src/Makefile.am (install-data-hook): Create $(admindir) and
+	$(importdir).
+	* NEWS: Document this.
+
+2014-02-07  Colin Watson  <cjwatson@debian.org>
+
+	Stop hardcoding Debian defaults for various directories
+
+	* configure.ac: Substitute admindir, importdir, and procdir.
+	* man/update-binfmts.8: Rename to ...
+	* man/update-binfmts.man8: ... this, without hardcoding directories.
+	* man/Makefile.am (dist_man8_MANS): Rename to ...
+	(man8_MANS): ... this.
+	(CLEANFILES): Clean $(man8_MANS).
+	(.man8.8): Generate manual page with appropriate substitutions.
+	(dist-hook): Distribute update-binfmts.man8.
+	* src/Makefile.am (AM_CPPFLAGS): Define ADMINDIR, IMPORTDIR,
+	PROCDIR, and AUXDIR.
+	* src/paths.c (admindir, importdir, procdir, auxdir): Use
+	definitions rather than hardcoding.
+	* src/run-detectors.c (options): Likewise.
+	* src/update-binfmts.c (options): Likewise.
+	* .gitignore: Add man/update-binfmts.8.
+	* NEWS: Document this.
+
+2014-02-06  Colin Watson  <cjwatson@debian.org>
+
+	Upgrade to Automake 1.14.1.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Version: 2.1.1.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Fix installation of systemd unit files.
+
+	* configure.ac (AC_CONFIG_FILES): Remove
+	init/systemd/binfmt-support.service.
+	* init/systemd/Makefile.am (EXTRA_DIST): Add
+	binfmt-support.service.in.
+	(CLEANFILES): Add binfmt-support.service.
+	(systemdsystemunit_DATA): Rename to ...
+	(nodist_systemdsystemunit_DATA): ... this.
+	(binfmt-support.service): Generate from binfmt-support.service.in.
+	* NEWS: Document this.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	* configure.ac: Fix --with-systemdsystemunitdir.
+
+	* .gitignore: Add **/*.a and **/*.o.
+
+	Version: 2.1.0.
+
+	* Makefile.am (gen_start_date): Fix fencepost error.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Add a systemd unit file.
+
+	* configure.ac: Add --with-systemdsystemunitdir option.
+	(AC_CONFIG_FILES): Add init/systemd/Makefile and
+	init/systemd/binfmt-support.service.
+	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Ensure that
+	--with-systemdsystemunitdir points under ${prefix}.
+	* init/Makefile.am (SUBDIRS): Add systemd.
+	* init/systemd/Makefile.am: New file.
+	* init/systemd/binfmt-support.service.in: New file.
+	* NEWS: Document this.
+	* .gitignore: Update.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Add copyright/licence notices to init files.
+
+	* .gitignore: Remove Debian-specific files.
+
+	* NEWS: New file.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Add sample init configuration.
+
+	* Makefile.am (SUBDIRS): Add init.
+	* configure.ac (AC_CONFIG_FILES): Add init/Makefile,
+	init/sysvinit/Makefile, and init/upstart/Makefile.
+	* init/Makefile.am: New file.
+	* init/sysvinit/Makefile.am: New file.
+	* init/sysvinit/binfmt-support.sh: New file, stripped down from
+	debian/init.d in the Debian packaging.
+	* init/upstart/Makefile.am: New file.
+	* init/upstart/binfmt-support.conf: New file, copied from
+	debian/upstart in the Debian packaging.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	gnulib: Import gnupload module.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Improve accuracy of "make dist".
+
+	* Makefile.am (SUBDIRS): Add doc.
+	(EXTRA_DIST): Add gnulib/m4/math_h.m4.
+	* configure.ac (AC_CONFIG_FILES): Add doc/Makefile.
+	* doc/Makefile.am: New file.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Stop trying to distribute non-existent files.
+
+	* Makefile.am (EXTRA_DIST): Remove gnulib/gets.patch and
+	gnulib/lib/argp-parse.patch.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Automatically generate ChangeLog from git
+
+	* Makefile.am (dist-hook): Add gen-ChangeLog.
+	(gen-ChangeLog): New rule, based on that in coreutils.
+	* gnulib: Import gitlog-to-changelog module.
+	* .gitignore: Add **/*~.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Remove Debian packaging.
+
+	* debian/changelog: Copy to ...
+	* ChangeLog-2013: ... here.
+	* Makefile.am (EXTRA_DIST): Add ChangeLog-2013.
+	* configure.ac (AC_INIT): Stop autogenerating version from
+	debian/changelog.  Bump to 2.1.0.
+
+2013-12-29  Colin Watson  <cjwatson@debian.org>
+
+	Move to git.
+
+	* .bzrignore: Move to ...
+	* .gitignore: ... here, adjusting for differences between bzr and
+	git.
+	* Makefile.am (EXTRA_DIST): Replace .bzrignore with .gitignore.
+	* gnulib: Add --no-vc-files.

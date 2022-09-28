@@ -1,0 +1,27 @@
+Source: binfmt-support
+Section: admin
+Priority: optional
+Maintainer: Colin Watson <cjwatson@debian.org>
+Standards-Version: 4.0.0
+Build-Depends: debhelper-compat (= 9), debhelper (>= 9.20160709~), pkg-config, libpipeline-dev, dh-autoreconf
+Homepage: https://nongnu.org/binfmt-support/
+Vcs-Git: https://salsa.debian.org/debian/binfmt-support.git
+Vcs-Browser: https://salsa.debian.org/debian/binfmt-support
+Rules-Requires-Root: no
+
+Package: binfmt-support
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base (>= 4.1+Debian3)
+Multi-Arch: foreign
+Description: Support for extra binary formats
+ The binfmt_misc kernel module, contained in versions 2.1.43 and later of the
+ Linux kernel, allows system administrators to register interpreters for
+ various binary formats based on a magic number or their file extension, and
+ cause the appropriate interpreter to be invoked whenever a matching file is
+ executed. Think of it as a more flexible version of the #! executable
+ interpreter mechanism.
+ .
+ This package provides an 'update-binfmts' script with which package
+ maintainers can register interpreters to be used with this module without
+ having to worry about writing their own init.d scripts, and which sysadmins
+ can use for a slightly higher-level interface to this module.

@@ -1,0 +1,15 @@
+#! /bin/sh
+
+set -e
+
+if [ "$1" = configure ]; then
+    update-binfmts --import || true
+
+    if dpkg --compare-versions "$2" lt 2.0.0; then
+	rm -rf /var/cache/binfmts
+    fi
+fi
+
+#DEBHELPER#
+
+exit 0

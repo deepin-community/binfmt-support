@@ -1,0 +1,366 @@
+.\" update-binfmts.8
+.Dd January 24, 2011
+.Os Debian
+.ds volume-operating-system Debian
+.Dt UPDATE\-BINFMTS 8
+.Sh NAME
+.Nm update\-binfmts
+.Nd maintain registry of executable binary formats
+.Sh SYNOPSIS
+.Nm
+.Op Ar options
+.Fl Fl install
+.Ar name path spec
+.br
+.Nm
+.Op Ar options
+.Fl Fl remove
+.Ar name path
+.br
+.Nm
+.Op Ar options
+.Fl Fl import
+.Op Ar name
+.br
+.Nm
+.Op Ar options
+.Fl Fl unimport
+.Op Ar name
+.br
+.Nm
+.Op Ar options
+.Fl Fl display
+.Op Ar name
+.br
+.Nm
+.Op Ar options
+.Fl Fl enable
+.Op Ar name
+.br
+.Nm
+.Op Ar options
+.Fl Fl disable
+.Op Ar name
+.br
+.Nm
+.Op Ar options
+.Fl Fl find
+.Op Ar path
+.Sh DESCRIPTION
+Versions 2.1.43 and later of the Linux kernel have contained the binfmt_misc
+module.
+This enables a system administrator to register interpreters for various
+binary formats based on a magic number or their file extension, and cause
+the appropriate interpreter to be invoked whenever a matching file is
+executed.
+Think of it as a more flexible version of the #! executable interpreter
+mechanism, or as something which can behave a little like "associations" in
+certain other operating systems (though in GNU/Linux the tendency is to keep
+this sort of thing somewhere else, like your file manager).
+.Nm
+manages a persistent database of these interpreters.
+.Pp
+When each package providing a registered interpreter is installed, changed,
+or removed,
+.Nm
+is called to update information about that interpreter.
+.Nm
+is usually called from the
+.Pa postinst
+or
+.Pa prerm
+scripts in Debian packages.
+.Sh OPTIONS
+Exactly one action must be specified; this may be accompanied by any one of
+the common options.
+.Ss COMMON OPTIONS
+.Bl -tag -width 4n
+.It Fl Fl package Ar package-name
+Specifies the name of the current package, to be used by package
+post-installation and pre-removal scripts.
+System administrators installing binary formats for local use should
+probably ignore this option.
+.Pp
+When installing new formats, the
+.Fl Fl import
+action should be used instead.
+Similarly, when removing old formats, the
+.Fl Fl unimport
+action should be used instead.
+.It Fl Fl admindir Ar directory
+Specifies the administrative directory, when this is to be different from
+the default of
+.Pa %admindir% .
+.It Fl Fl importdir Ar directory
+Specifies the directory from which packaged binary formats are imported,
+when this is to be different from the default of
+.Pa %importdir% .
+.It Fl Fl test
+Don't do anything, just demonstrate what would be done.
+.It Fl Fl help
+Display some usage information.
+.It Fl Fl version
+Display version information.
+.El
+.Ss ACTIONS
+.Bl -tag -width 4n
+.It Fl Fl install Ar name path spec
+Install a binary format identified by
+.Ar name
+with interpreter
+.Ar path
+into the database.
+After registration, this format will be used when the kernel tries to
+execute a file matching
+.Ar spec
+(see
+.Sx BINARY FORMAT SPECIFICATIONS
+below).
+.Pp
+.Fl Fl install
+will attempt to enable this binary format in the kernel as well as adding it
+to its own database; see
+.Fl Fl enable
+below.
+.Pp
+You cannot install a format with any of the names ".", "..", "register", or
+"status", as these are used by the filesystem or the binfmt_misc module.
+.It Fl Fl remove Ar name path
+Remove the binary format identified by
+.Ar name
+with interpreter
+.Ar path
+from the database.
+This will also attempt to disable the binary format in the kernel; see
+.Fl Fl disable
+below.
+.It Fl Fl import Op Ar name
+Import a packaged format file called
+.Ar name ,
+or import all format files currently on the system if no
+.Ar name
+is given.
+If
+.Ar name
+is not a full path, it is assumed to be a file in the import directory
+.Pf ( Pa %importdir%
+by default).
+See
+.Sx FORMAT FILES
+below for the required contents of these files.
+.Pp
+For packages, this is preferable to using the
+.Fl Fl install
+option, as a format file can be installed without
+.Nm
+needing to be available.
+.It Fl Fl unimport Op Ar name
+Unimport a packaged format file called
+.Ar name ,
+or unimport all format files currently on the system if no
+.Ar name
+is given.
+If
+.Ar name
+is not a full path, it is assumed to be a file in the import directory
+.Pf ( Pa %importdir%
+by default).
+See
+.Sx FORMAT FILES
+below for the required contents of these files.
+.Pp
+For packages, this is preferable to using the
+.Fl Fl remove
+option, for symmetry with
+.Fl Fl import .
+.It Fl Fl display Op Ar name
+Display any information held in the database about the binary format
+identifier
+.Ar name ,
+or about all known binary formats if no
+.Ar name
+is given.
+Also show whether displayed binary formats are enabled or disabled.
+.It Fl Fl enable Op Ar name
+Enable binary format
+.Ar name ,
+or all known binary formats if no
+.Ar name
+is given, in the kernel, thus enabling direct execution of matching files.
+You must have binfmt_misc compiled into the kernel or loaded as a module for
+this to work.
+.It Fl Fl disable Op Ar name
+Disable binary format
+.Ar name ,
+or all known binary formats if no
+.Ar name
+is given, in the kernel, thus disabling direct execution of matching files.
+You must have binfmt_misc compiled into the kernel or loaded as a module for
+this to work.
+.It Fl Fl find Op Ar path
+Print the list of interpreters that will be tried in sequence when
+attempting to execute
+.Ar path ,
+one per line.
+The first one for which
+.Xr execvp 3
+succeeds will be used.
+.Pp
+Note that if multiple formats match an executable, then the order is in
+general not defined, and may not be preserved between
+.Nm
+operations, so you should generally try to ensure that this option prints at
+most one line for any given
+.Ar path .
+The exception to this is that any format with a userspace detector will be
+run before any format without a userspace detector.
+.El
+.Ss BINARY FORMAT SPECIFICATIONS
+.Bl -tag -width 4n
+.It Fl Fl magic Ar byte-sequence
+This matches all files with the magic number
+.Ar byte-sequence .
+Hexadecimal escapes may be included in the
+.Ar byte-sequence
+by preceding them with \ex, for example
+.Sq \ex0a
+for a linefeed.
+Remember to protect such escapes with quotes or an additional backslash to
+prevent their interpretation by the shell.
+.Pp
+Also see
+.Fl Fl offset
+and
+.Fl Fl mask .
+.It Fl Fl offset Ar offset
+This is the offset of the magic/mask in the file, counted in bytes.
+The default is 0.
+Only valid with
+.Fl Fl magic .
+.It Fl Fl mask Ar byte-sequence
+This mask will be logically-ANDed with the string to be checked against the
+magic number given with
+.Fl Fl magic .
+The default is all 0xff, i.e. no effect.
+Only valid with
+.Fl Fl magic .
+.It Fl Fl extension Ar extension
+This matches all files whose names end in
+.Qq Pf . Ar extension .
+Hexadecimal escapes are not recognized here.
+Extension matching is case-sensitive.
+.It Fl Fl detector Ar path
+If this option is used, a userspace detector program will be used to check
+whether the file is suitable for this interpreter.
+This may be used when the binary format is more complex than can be handled
+by the kernel's format specifications alone.
+The program should return an exit code of zero if the file is appropriate
+and non-zero otherwise.
+This option cannot be used together with
+.Fl Fl fix\-binary Cm yes .
+.It Fl Fl credentials Cm yes , Fl Fl credentials Cm no
+Whether to keep the credentials of the original binary to run the interpreter;
+this is typically useful to run setuid binaries, but has security implications.
+.It Fl Fl preserve Cm yes , Fl Fl preserve Cm no
+Whether to preserve the original
+.Li argv[0]
+when running the interpreter, rather than overwriting it with the full path
+to the binary.
+.It Fl Fl fix\-binary Cm yes , Fl Fl fix\-binary Cm no
+Whether to open the interpreter binary immediately and always use the opened
+image.
+This allows the interpreter from the host to be used regardless of usage in
+chroots or different mount namespaces.
+The default behaviour is
+.Cm no ,
+meaning that the kernel should open the interpreter binary lazily when
+needed.
+This option requires Linux 4.8 or newer.
+It cannot be used together with
+.Fl Fl detector ,
+or with multiple binary formats that share the same magic number, since the
+kernel will only open a single interpreter binary which will then not be
+able to detect and execute the real interpreter from inside a chroot or from
+a different mount namespace.
+.El
+.Ss FORMAT FILES
+A format file is a sequence of options, one per line, corresponding roughly
+to the options given to an
+.Fl Fl install
+command.
+Each option consists of a key, followed by whitespace, followed by a value.
+.Pp
+The
+.Ar package
+option should be set to the current package.
+The
+.Ar interpreter
+option should be set to the path to the interpreter that will handle this
+binary format.
+The
+.Ar magic ,
+.Ar offset ,
+.Ar mask ,
+.Ar extension ,
+.Ar detector ,
+.Ar credentials ,
+.Ar preserve ,
+and
+.Ar fix_binary
+options correspond to the command-line options of the same names.
+.Sh EXIT STATUS
+.Bl -tag -width 4n
+.It 0
+The requested action was successfully performed.
+.It 2
+Problems were encountered whilst parsing the command line or performing the
+action.
+.El
+.Sh EXAMPLES
+This format file can be used with an interpreter capable of handling Java
+\&.class files:
+.Bd -literal
+    package javawrapper
+    interpreter /usr/bin/javawrapper
+    magic \exca\exfe\exba\exbe
+.Ed
+.Pp
+This corresponds roughly to the following command:
+.Bd -literal
+    update\-binfmts \-\-package javawrapper \e
+        \-\-install javawrapper /usr/bin/javawrapper \e
+        \-\-magic \(aq\exca\exfe\exba\exbe\(aq
+.Ed
+.Sh NOTES
+If you're not careful, you can break your system with
+.Nm .
+An easy way to do this is to register an ELF binary as a handler for ELF,
+which will almost certainly cause your system to hang immediately; even if
+it doesn't, you won't be able to run
+.Nm
+to fix it.
+In the future
+.Nm
+may have some checks to prevent this sort of thing happening accidentally,
+though of course you can still manipulate the binfmt_misc kernel module
+directly.
+.Sh AUTHOR
+.An -nosplit
+.Nm
+is copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010, 2011
+.An Colin Watson Aq cjwatson@debian.org .
+See the GNU General Public License version 3 or later for copying
+conditions.
+.Pp
+You can find the GNU GPL v3 in
+.Pa /usr/share/common\-licenses/GPL\-3
+on any modern Debian system.
+.Pp
+Richard Guenther wrote the binfmt_misc kernel module.
+.Sh THANKS
+Ian Jackson wrote
+.Ic update\-alternatives
+and
+.Ic dpkg\-divert ,
+from which this program borrows heavily.

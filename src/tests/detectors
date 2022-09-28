@@ -1,0 +1,150 @@
+#! /bin/sh
+
+# Copyright (C) 2010 Colin Watson.
+#
+# This file is part of binfmt-support.
+#
+# binfmt-support is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# binfmt-support is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with binfmt-support; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+# Test userspace detectors.
+
+: ${srcdir=.}
+. "$srcdir/testlib.sh"
+
+init
+fake_proc
+
+for i in 1 2 3; do
+	cat >"$tmpdir/program-$i" <<EOF
+#! /bin/sh
+echo program-$i "\$@"
+EOF
+	chmod +x "$tmpdir/program-$i"
+done
+
+for i in 1 2; do
+	cat >"$tmpdir/detector-$i" <<EOF
+#! /bin/sh
+grep -q ^$i "\$1"
+EOF
+	chmod +x "$tmpdir/detector-$i"
+done
+
+for i in 1 2 3; do
+	cat >"$tmpdir/input-$i.ext" <<EOF
+$i input file
+EOF
+done
+
+expect_pass 'detector 1: install' \
+	    'update_binfmts_proc --install test-1 "$tmpdir/program-1" --extension ext --detector "$tmpdir/detector-1"'
+cat >"$tmpdir/1-admin.exp" <<EOF
+:
+extension
+0
+ext
+
+$tmpdir/program-1
+$tmpdir/detector-1
+
+
+
+EOF
+expect_pass 'detector 1: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-1" "$tmpdir/1-admin.exp"'
+cat >"$tmpdir/1-proc.exp" <<EOF
+enabled
+interpreter $pkglibexecdir/run-detectors
+flags: 
+extension .ext
+EOF
+expect_pass 'detector 1: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-1" "$tmpdir/1-proc.exp"'
+
+expect_pass 'detector 2: install' \
+	    'update_binfmts_proc --install test-2 "$tmpdir/program-2" --extension ext --detector "$tmpdir/detector-2"'
+cat >"$tmpdir/2-admin.exp" <<EOF
+:
+extension
+0
+ext
+
+$tmpdir/program-2
+$tmpdir/detector-2
+
+
+
+EOF
+expect_pass 'detector 2: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-2" "$tmpdir/2-admin.exp"'
+cat >"$tmpdir/2-proc.exp" <<EOF
+enabled
+interpreter $pkglibexecdir/run-detectors
+flags: 
+extension .ext
+EOF
+expect_pass 'detector 2: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-2" "$tmpdir/2-proc.exp"'
+
+expect_pass 'no detector: install' \
+	    'update_binfmts_proc --install test-3 "$tmpdir/program-3" --extension ext'
+cat >"$tmpdir/3-admin.exp" <<EOF
+:
+extension
+0
+ext
+
+$tmpdir/program-3
+
+
+
+
+EOF
+expect_pass 'no detector: admindir entry OK' \
+	    'diff -u "$tmpdir/var/lib/binfmts/test-3" "$tmpdir/3-admin.exp"'
+cat >"$tmpdir/3-proc.exp" <<EOF
+enabled
+interpreter $pkglibexecdir/run-detectors
+flags: 
+extension .ext
+EOF
+expect_pass 'no detector: procdir entry OK' \
+	    'diff -u "$tmpdir/proc/test-3" "$tmpdir/3-proc.exp"'
+
+echo "program-1 $tmpdir/input-1.ext --foo=bar file --admindir=baz -v" >"$tmpdir/4.exp"
+expect_pass 'detector 1: run' \
+	    'run_detectors "$tmpdir/input-1.ext" --foo=bar file --admindir=baz -v >"$tmpdir/4.out"'
+expect_pass 'detector 1: output' \
+	    'diff -u "$tmpdir/4.out" "$tmpdir/4.exp"'
+
+echo "program-2 $tmpdir/input-2.ext" >"$tmpdir/5.exp"
+expect_pass 'detector 2, without arguments: run' \
+	    'run_detectors "$tmpdir/input-2.ext" >"$tmpdir/5.out"'
+expect_pass 'detector 2, without arguments: output' \
+	    'diff -u "$tmpdir/5.out" "$tmpdir/5.exp"'
+
+echo "program-3 $tmpdir/input-3.ext foo --arg" >"$tmpdir/6.exp"
+expect_pass 'no detector: run' \
+	    'run_detectors "$tmpdir/input-3.ext" foo --arg >"$tmpdir/6.out"'
+expect_pass 'no detector: output' \
+	    'diff -u "$tmpdir/6.out" "$tmpdir/6.exp"'
+
+echo "program-3 $tmpdir/input-3.ext" >"$tmpdir/7.exp"
+expect_pass 'no detector, without arguments: run' \
+	    'run_detectors "$tmpdir/input-3.ext" >"$tmpdir/7.out"'
+expect_pass 'no detector, without arguments: output' \
+	    'diff -u "$tmpdir/7.out" "$tmpdir/7.exp"'
+
+finish
